@@ -1,9 +1,24 @@
-const mongoose = require("mongoose");
+// models/Student.js
+import mongoose from "mongoose";
 
-const studentSchema = new mongoose.Schema({
-  institution_id: { type: mongoose.Schema.Types.ObjectId, ref: "Institution", required: true },
-  branch_id: { type: mongoose.Schema.Types.ObjectId, ref: "Branch", required: true },
-  name: { type: String, required: true }
-});
+const studentSchema = new mongoose.Schema(
+  {
+    institution_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Institution",
+      required: true
+    },
+    branch_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      required: true
+    },
+    name: {
+      type: String,
+      required: true
+    }
+  },
+  { timestamps: true }
+);
 
-module.exports = mongoose.model("Student", studentSchema);
+export const Student = mongoose.model("Student", studentSchema);
