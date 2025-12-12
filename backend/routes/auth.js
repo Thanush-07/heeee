@@ -1,12 +1,13 @@
-const express = require("express");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const bcrypt = require("bcryptjs");
-const User = require("../models/User");
+// routes/auth.js
+import express from "express";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { User } from "../models/User.js";
 
 const router = express.Router();
 
-const JWT_SECRET = "your_jwt_secret_key";    // move to .env later
+const JWT_SECRET = "your_jwt_secret_key"; // move to .env later
 const FRONTEND_URL = "http://localhost:5173";
 
 // LOGIN
@@ -16,11 +17,16 @@ router.post("/login", async (req, res) => {
     console.log("LOGIN BODY:", req.body);
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
     const user = await User.findOne({ email, status: "active" });
-    console.log("FOUND USER:", user && { email: user.email, role: user.role });
+    console.log(
+      "FOUND USER:",
+      user && { email: user.email, role: user.role }
+    );
 
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password" });
@@ -58,11 +64,15 @@ router.post("/login", async (req, res) => {
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "Email is required" });
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.json({ message: "If that email exists, a reset link was sent" });
+      return res.json({
+        message: "If that email exists, a reset link was sent"
+      });
     }
 
     const token = crypto.randomBytes(32).toString("hex");
@@ -112,4 +122,4 @@ router.post("/reset-password/:token", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
