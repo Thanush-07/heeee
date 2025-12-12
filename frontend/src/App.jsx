@@ -8,7 +8,7 @@ import CompanyLayout from "./pages/Company_admin/components/CompanyLayout";
 import CompanyAdminDashboard from "./pages/Company_admin/Dashboard";
 import Institutions from "./pages/Company_admin/Institutions";
 import Users from "./pages/Company_admin/Users";
-
+import GlobalReport from "./pages/Company_admin/GlobalReport";
 import SuperAdminDashboard from "./pages/Super_admin/Dashboard";
 import BranchAdminDashboard from "./pages/Branch_admin/Dashboard";
 import StaffDashboard from "./pages/Staff/Dashboard";
@@ -28,6 +28,7 @@ function App() {
           <Route path="dashboard" element={<CompanyAdminDashboard />} />
           <Route path="institutions" element={<Institutions />} />
           <Route path="users" element={<Users />} />
+          <Route path="report" element={<GlobalReport />} />
         </Route>
 
         {/* Other roles */}
