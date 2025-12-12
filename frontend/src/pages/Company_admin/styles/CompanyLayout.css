@@ -135,3 +135,17 @@
     display: inline-flex;
   }
 }
+.sidebar-logout {
+  margin-top: auto;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ef4444;
+  background: #991b1b;
+  color: #fee2e2;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sidebar-logout:hover {
+  background: #b91c1c;
+}

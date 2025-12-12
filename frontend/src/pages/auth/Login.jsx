@@ -29,8 +29,8 @@ export default function Login() {
         case "company_admin":
            navigate("/company-admin/dashboard");
           break;
-        case "super_admin":
-           navigate("/super-admin/dashboard");
+        case "institution_admin":
+           navigate("/institution/dashboard");
           break;
         case "branch_admin":
           navigate("/branch-admin/dashboard");

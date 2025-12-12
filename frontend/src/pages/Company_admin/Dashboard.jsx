@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import "./styles/CompanyDashboard.css";
 
@@ -6,21 +6,35 @@ const API_URL = "http://localhost:5000/api/company/dashboard";
 
 export default function CompanyAdminDashboard() {
   const [totals, setTotals] = useState(null);
+  const [institutions, setInstitutions] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [selectedInstitution, setSelectedInstitution] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const loadData = async (branchId = "") => {
+  // Filter branches client-side to show only branches of the selected institution
+  const filteredBranches = useMemo(() => {
+    if (!selectedInstitution) return branches;
+    return branches.filter(
+      (b) => String(b.institutionId || b.institution_id) === selectedInstitution
+    );
+  }, [branches, selectedInstitution]);
+
+  const loadData = async (institutionId = "", branchId = "") => {
     setLoading(true);
     try {
-      const res = await axios.get(API_URL, {
-        params: branchId ? { branchId } : {}
-      });
+      const params = {};
+      if (institutionId) params.institutionId = institutionId;
+      if (branchId) params.branchId = branchId;
+
+      const res = await axios.get(API_URL, { params });
 
       console.log("DASHBOARD DATA =>", res.data);
 
       setTotals(res.data.totals);
+      // Expect backend to send institutions + branches
+      setInstitutions(res.data.institutions || []);
       setBranches(res.data.branches || []);
       setRecent(res.data.recentActivities || []);
     } catch (err) {
@@ -31,6 +45,7 @@ export default function CompanyAdminDashboard() {
         students: 0,
         feeCollected: 0
       });
+      setInstitutions([]);
       setBranches([]);
       setRecent([]);
     } finally {
@@ -39,13 +54,22 @@ export default function CompanyAdminDashboard() {
   };
 
   useEffect(() => {
+    // initial load with no filters
     loadData();
   }, []);
+
+  const handleInstitutionChange = (e) => {
+    const value = e.target.value;
+    setSelectedInstitution(value);
+    // reset branch when institution changes
+    setSelectedBranch("");
+    loadData(value || "", "");
+  };
 
   const handleBranchChange = (e) => {
     const value = e.target.value;
     setSelectedBranch(value);
-    loadData(value || "");
+    loadData(selectedInstitution || "", value || "");
   };
 
   if (!totals) {
@@ -61,19 +85,36 @@ export default function CompanyAdminDashboard() {
       <div className="dash-header">
         <div>
           <h1>Overview</h1>
-          <p>Key metrics across all institutions and branches.</p>
+          <p>Key metrics across institutions and branches.</p>
         </div>
 
-        <div className="dash-filter">
-          <label>Branch</label>
-          <select value={selectedBranch} onChange={handleBranchChange}>
-            <option value="">All branches</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name} ({b.institutionName})
-              </option>
-            ))}
-          </select>
+        <div className="dash-filter-group">
+          <div className="dash-filter">
+            <label>Institution</label>
+            <select
+              value={selectedInstitution}
+              onChange={handleInstitutionChange}
+            >
+              <option value="">All institutions</option>
+              {institutions.map((inst) => (
+                <option key={inst._id || inst.id} value={inst._id || inst.id}>
+                  {inst.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="dash-filter">
+            <label>Branch</label>
+            <select value={selectedBranch} onChange={handleBranchChange}>
+              <option value="">All branches</option>
+              {filteredBranches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} ({b.institutionName})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -98,7 +139,11 @@ export default function CompanyAdminDashboard() {
             ₹ {totals.feeCollected.toLocaleString()}
           </span>
           <span className="dash-card-note">
-            {selectedBranch ? "Selected branch" : "All branches"}
+            {selectedBranch
+              ? "Selected branch"
+              : selectedInstitution
+              ? "Selected institution"
+              : "All institutions & branches"}
           </span>
         </div>
       </div>
@@ -118,13 +163,13 @@ export default function CompanyAdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {branches.map((b) => (
+                {filteredBranches.map((b) => (
                   <tr key={b.id}>
                     <td>{b.name}</td>
                     <td>{b.institutionName}</td>
                   </tr>
                 ))}
-                {branches.length === 0 && (
+                {filteredBranches.length === 0 && (
                   <tr>
                     <td colSpan="2" className="dash-empty">
                       No branches found.
@@ -148,7 +193,9 @@ export default function CompanyAdminDashboard() {
             <ul className="dash-activity">
               {recent.map((item) => (
                 <li key={item.id}>
-                  <div className="dash-activity-title">{item.description}</div>
+                  <div className="dash-activity-title">
+                    {item.description}
+                  </div>
                   <div className="dash-activity-meta">
                     {item.when} • {item.by}
                   </div>

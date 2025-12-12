@@ -16,6 +16,7 @@ export default function Users() {
     institution_id: ""
   });
   const [editing, setEditing] = useState(false);
+  const [error, setError] = useState("");
 
   const loadData = async () => {
     try {
@@ -27,6 +28,7 @@ export default function Users() {
       setInstitutions(i.data);
     } catch (e) {
       console.error("USERS LOAD ERROR", e);
+      setError("Failed to load admins or institutions");
     }
   };
 
@@ -38,16 +40,44 @@ export default function Users() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const resetForm = () => {
+    setForm({
+      id: "",
+      name: "",
+      email: "",
+      phone: "",
+      institution_id: ""
+    });
+    setEditing(false);
+    setError("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editing) {
-      await axios.put(`${API_URL}/${form.id}`, form);
-    } else {
-      await axios.post(API_URL, form);
+    try {
+      const payload = {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        institution_id: form.institution_id
+      };
+
+      if (editing) {
+        await axios.put(`${API_URL}/${form.id}`, payload);
+      } else {
+        await axios.post(API_URL, payload);
+      }
+
+      resetForm();
+      loadData();
+    } catch (err) {
+      console.error("ADMIN SAVE ERROR", err);
+      const msg =
+        err.response?.data?.message ||
+        "Failed to save admin (check required fields / duplicate email)";
+      setError(msg);
+      alert(msg);
     }
-    setForm({ id: "", name: "", email: "", phone: "", institution_id: "" });
-    setEditing(false);
-    loadData();
   };
 
   const startEdit = (a) => {
@@ -59,12 +89,21 @@ export default function Users() {
       institution_id: a.institution_id?._id || a.institution_id || ""
     });
     setEditing(true);
+    setError("");
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this admin?")) return;
-    await axios.delete(`${API_URL}/${id}`);
-    loadData();
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      loadData();
+    } catch (err) {
+      console.error("ADMIN DELETE ERROR", err);
+      const msg =
+        err.response?.data?.message || "Failed to delete admin";
+      setError(msg);
+      alert(msg);
+    }
   };
 
   return (
@@ -115,7 +154,19 @@ export default function Users() {
           <button type="submit">
             {editing ? "Update" : "Create"}
           </button>
+          {editing && (
+            <button
+              type="button"
+              style={{ marginLeft: 8 }}
+              onClick={resetForm}
+            >
+              Cancel
+            </button>
+          )}
         </form>
+        {error && (
+          <p style={{ color: "red", marginTop: 8 }}>{error}</p>
+        )}
       </div>
 
       <div className="dash-card">
@@ -139,7 +190,9 @@ export default function Users() {
                   <td>{a.status}</td>
                   <td>
                     <button onClick={() => startEdit(a)}>Edit</button>
-                    <button onClick={() => handleDelete(a._id)}>Delete</button>
+                    <button onClick={() => handleDelete(a._id)}>
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
