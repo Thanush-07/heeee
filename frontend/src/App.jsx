@@ -9,7 +9,7 @@ import CompanyAdminDashboard from "./pages/Company_admin/Dashboard";
 import Institutions from "./pages/Company_admin/Institutions";
 import Users from "./pages/Company_admin/Users";
 import GlobalReport from "./pages/Company_admin/GlobalReport";
-import SuperAdminDashboard from "./pages/Super_admin/Dashboard";
+import InstitutionDashboard from "./pages/Institution_admin/Dashboard";
 import BranchAdminDashboard from "./pages/Branch_admin/Dashboard";
 import StaffDashboard from "./pages/Staff/Dashboard";
 import ParentDashboard from "./pages/Parent/Dashboard";
@@ -26,13 +26,15 @@ function App() {
         {/* Company admin module with layout */}
         <Route path="/company-admin" element={<CompanyLayout />}>
           <Route path="dashboard" element={<CompanyAdminDashboard />} />
-          <Route path="institutions" element={<Institutions />} />
+          <Route path="Institutions" element={<Institutions />} />
           <Route path="users" element={<Users />} />
           <Route path="report" element={<GlobalReport />} />
         </Route>
 
-        {/* Other roles */}
-        <Route path="/super-admin/dashboard" element={<SuperAdminDashboard />} />
+        {/* Institution admin module with layout */}
+        <Route path="/InstitutionDashboard" element={<InstitutionDashboard />} />  
+        <Route path="/institution/*" element={<InstitutionLayout />} />
+ {/* Other roles */}
         <Route path="/branch-admin/dashboard" element={<BranchAdminDashboard />} />
         <Route path="/staff/dashboard" element={<StaffDashboard />} />
         <Route path="/parent/dashboard" element={<ParentDashboard />} />
