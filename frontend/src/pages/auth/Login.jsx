@@ -3,7 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "./styles/Login.css";
-import ematixLogo from "../../assets/ematix.png";
+/*import ematixLogo from "../../assets/ematix.png";*/
 
 const API_URL = "http://localhost:5000/api/auth/login";
 
@@ -50,7 +50,7 @@ export default function Login() {
     <div className="enterprise-container">
       {/* LEFT SIDE */}
       <div className="enterprise-left">
-        <img src={ematixLogo} alt="Ematix Logo" className="left-logo" />
+        {/*<img src={ematixLogo} alt="Ematix Logo" className="left-logo" />*/}
 
         <div className="left-text">
           <h1 className="left-title">Ematix School Management ERP</h1>
