@@ -1,15 +1,17 @@
+/* ===== Layout Shell ===== */
 .shell {
   display: grid;
   grid-template-columns: 220px 1fr;
   min-height: 100vh;
   background: #f3f4f6;
   color: #111827;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
-/* Sidebar */
+/* ===== Sidebar ===== */
 .sidebar {
-  background: #0f172a;
+  background: #1f4ebc;
   color: #e5e7eb;
   padding: 16px 14px;
   display: flex;
@@ -17,6 +19,7 @@
   gap: 24px;
 }
 
+/* Brand */
 .sidebar-brand {
   display: flex;
   align-items: center;
@@ -45,6 +48,7 @@
   color: #9ca3af;
 }
 
+/* Nav */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -57,7 +61,7 @@
   border-radius: 8px;
   text-decoration: none;
   color: #e5e7eb;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s ease;
 }
 
 .nav-link:hover {
@@ -69,7 +73,23 @@
   color: #f9fafb;
 }
 
-/* Main */
+/* Logout */
+.sidebar-logout {
+  margin-top: auto;
+  padding: 5px 5px;
+  border-radius: 8px;
+  border: 1px solid #ef4444;
+  background: #991b1b;
+  color: #fee2e2;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sidebar-logout:hover {
+  background: #b91c1c;
+}
+
+/* ===== Main ===== */
 .main {
   display: flex;
   flex-direction: column;
@@ -84,7 +104,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
 }
 
 .main-title {
@@ -101,14 +120,24 @@
   padding: 16px;
 }
 
-/* Mobile: sidebar collapses, opened with menu button */
+/* Menu Button */
 .menu-btn {
   border: none;
   background: transparent;
-  font-size: 20px;
+  font-size: 22px;
+  cursor: pointer;
   display: none;
 }
 
+/* ===== Backdrop ===== */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 30;
+}
+
+/* ===== Mobile Fix ===== */
 @media (max-width: 768px) {
   .shell {
     grid-template-columns: 1fr;
@@ -116,10 +145,10 @@
 
   .sidebar {
     position: fixed;
-    inset: 0 40% 0 0;
-    max-width: 260px;
+    inset: 0 auto 0 0;
+    width: 260px;
     transform: translateX(-100%);
-    transition: transform 0.2s ease-out;
+    transition: transform 0.25s ease;
     z-index: 40;
   }
 
@@ -127,25 +156,7 @@
     transform: translateX(0);
   }
 
-  .main {
-    z-index: 10;
-  }
-
   .menu-btn {
     display: inline-flex;
   }
-}
-.sidebar-logout {
-  margin-top: auto;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #ef4444;
-  background: #991b1b;
-  color: #fee2e2;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.sidebar-logout:hover {
-  background: #b91c1c;
 }

@@ -13,11 +13,11 @@ export default function CompanyAdminDashboard() {
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Filter branches client-side to show only branches of the selected institution
   const filteredBranches = useMemo(() => {
     if (!selectedInstitution) return branches;
     return branches.filter(
-      (b) => String(b.institutionId || b.institution_id) === selectedInstitution
+      (b) =>
+        String(b.institutionId || b.institution_id) === selectedInstitution
     );
   }, [branches, selectedInstitution]);
 
@@ -30,15 +30,12 @@ export default function CompanyAdminDashboard() {
 
       const res = await axios.get(API_URL, { params });
 
-      console.log("DASHBOARD DATA =>", res.data);
-
       setTotals(res.data.totals);
-      // Expect backend to send institutions + branches
       setInstitutions(res.data.institutions || []);
       setBranches(res.data.branches || []);
       setRecent(res.data.recentActivities || []);
     } catch (err) {
-      console.error("DASHBOARD LOAD ERROR", err);
+      console.error(err);
       setTotals({
         institutions: 0,
         branches: 0,
@@ -54,38 +51,37 @@ export default function CompanyAdminDashboard() {
   };
 
   useEffect(() => {
-    // initial load with no filters
     loadData();
   }, []);
 
   const handleInstitutionChange = (e) => {
     const value = e.target.value;
     setSelectedInstitution(value);
-    // reset branch when institution changes
     setSelectedBranch("");
-    loadData(value || "", "");
+    loadData(value, "");
   };
 
   const handleBranchChange = (e) => {
     const value = e.target.value;
     setSelectedBranch(value);
-    loadData(selectedInstitution || "", value || "");
+    loadData(selectedInstitution, value);
   };
 
   if (!totals) {
     return (
       <div className="dash-wrapper">
-        <div className="dash-card">Loading…</div>
+        <div className="dash-card">Loading...</div>
       </div>
     );
   }
 
   return (
     <div className="dash-wrapper">
+      {/* HEADER */}
       <div className="dash-header">
         <div>
-          <h1>Overview</h1>
-          <p>Key metrics across institutions and branches.</p>
+          <h1>Company Overview</h1>
+          <p>Real-time summary across institutions and branches</p>
         </div>
 
         <div className="dash-filter-group">
@@ -95,7 +91,7 @@ export default function CompanyAdminDashboard() {
               value={selectedInstitution}
               onChange={handleInstitutionChange}
             >
-              <option value="">All institutions</option>
+              <option value="">All Institutions</option>
               {institutions.map((inst) => (
                 <option key={inst._id || inst.id} value={inst._id || inst.id}>
                   {inst.name}
@@ -107,7 +103,7 @@ export default function CompanyAdminDashboard() {
           <div className="dash-filter">
             <label>Branch</label>
             <select value={selectedBranch} onChange={handleBranchChange}>
-              <option value="">All branches</option>
+              <option value="">All Branches</option>
               {filteredBranches.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name} ({b.institutionName})
@@ -120,76 +116,86 @@ export default function CompanyAdminDashboard() {
 
       {loading && <p className="dash-hint">Refreshing data…</p>}
 
+      {/* CARDS */}
       <div className="dash-cards">
         <div className="dash-card">
           <span className="dash-card-label">Institutions</span>
           <span className="dash-card-value">{totals.institutions}</span>
         </div>
+
         <div className="dash-card">
           <span className="dash-card-label">Branches</span>
           <span className="dash-card-value">{totals.branches}</span>
         </div>
+
         <div className="dash-card">
           <span className="dash-card-label">Students</span>
           <span className="dash-card-value">{totals.students}</span>
         </div>
+
         <div className="dash-card">
-          <span className="dash-card-label">Fee collected</span>
+          <span className="dash-card-label">Fee Collected</span>
           <span className="dash-card-value">
             ₹ {totals.feeCollected.toLocaleString()}
           </span>
           <span className="dash-card-note">
             {selectedBranch
-              ? "Selected branch"
+              ? "Selected Branch"
               : selectedInstitution
-              ? "Selected institution"
-              : "All institutions & branches"}
+              ? "Selected Institution"
+              : "All Data"}
           </span>
         </div>
       </div>
 
+      {/* PANELS */}
       <div className="dash-bottom">
         <section className="dash-panel">
-          <header className="dash-panel-head">
+          <div className="dash-panel-head">
             <h2>Branches</h2>
-            <p>Branches mapped to their institutions.</p>
-          </header>
+            <p>Mapped institutions and branches</p>
+          </div>
+
           <div className="dash-panel-body">
-            <table className="dash-table">
-              <thead>
-                <tr>
-                  <th align="left">Branch</th>
-                  <th align="left">Institution</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredBranches.map((b) => (
-                  <tr key={b.id}>
-                    <td>{b.name}</td>
-                    <td>{b.institutionName}</td>
-                  </tr>
-                ))}
-                {filteredBranches.length === 0 && (
+            <div className="table-scroll">
+              <table className="dash-table">
+                <thead>
                   <tr>
-                    <td colSpan="2" className="dash-empty">
-                      No branches found.
-                    </td>
+                    <th>Branch</th>
+                    <th>Institution</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredBranches.map((b) => (
+                    <tr key={b.id}>
+                      <td>{b.name}</td>
+                      <td>{b.institutionName}</td>
+                    </tr>
+                  ))}
+                  {filteredBranches.length === 0 && (
+                    <tr>
+                      <td colSpan="2" className="dash-empty">
+                        No branches found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
         <section className="dash-panel">
-          <header className="dash-panel-head">
-            <h2>Recent activity</h2>
-            <p>Latest changes in institutions and branches.</p>
-          </header>
+          <div className="dash-panel-head">
+            <h2>Recent Activity</h2>
+            <p>Latest changes and updates</p>
+          </div>
+
           <div className="dash-panel-body">
             {recent.length === 0 && (
-              <p className="dash-empty">No recent activity.</p>
+              <p className="dash-empty">No recent activity</p>
             )}
+
             <ul className="dash-activity">
               {recent.map((item) => (
                 <li key={item.id}>
