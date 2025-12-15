@@ -25,8 +25,9 @@ import BranchSales from "./pages/Branch_admin/Sales";
 import BranchInventory from "./pages/Branch_admin/Inventory";
 import BranchExpenses from "./pages/Branch_admin/Expenses";
 import BranchBuses from "./pages/Branch_admin/Buses";
-import BranchStaff from "./pages/Branch_admin/Staff";
 import BranchReports from "./pages/Branch_admin/Reports";
+import BranchChangePassword from "./pages/Branch_admin/ChangePassword";
+import BranchStaffManagement from "./pages/Branch_admin/StaffManagement";
 // Other roles
 import StaffDashboard from "./pages/Staff/Dashboard";
 import ParentDashboard from "./pages/Parent/Dashboard";
@@ -65,7 +66,8 @@ function App() {
           <Route path="inventory" element={<BranchInventory />} />
           <Route path="expenses" element={<BranchExpenses />} />
           <Route path="buses" element={<BranchBuses />} />
-          <Route path="staff" element={<BranchStaff />} />
+          <Route path="staff-management" element={<BranchStaffManagement />} />
+          <Route path="change-password" element={<BranchChangePassword />} />
           <Route path="reports" element={<BranchReports />} />
         </Route>
         {/* Other roles */}
