@@ -54,7 +54,29 @@ const studentSchema = new mongoose.Schema(
       type: String,
       enum: ["active", "left", "transferred"],
       default: "active"
-    }
+    },
+    image: {
+      type: String,
+      default: null
+    },
+    aadharCardNumber: {
+      type: String,
+      default: null
+    },
+    rationCardNumber: {
+      type: String,
+      default: null
+    },
+    customNote: {
+      type: String,
+      default: null
+    },
+    customFields: [
+      {
+        key: String,
+        value: String
+      }
+    ]
   },
   { timestamps: true }
 );

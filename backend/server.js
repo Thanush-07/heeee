@@ -10,6 +10,7 @@ import authRouter from "./routes/auth.js";
 import institutionRouter from "./routes/institution.js";
 import branchRouter from "./routes/branch.js";
 import inventoryRouter from "./routes/inventory.js";
+import staffRouter from "./routes/staff.js";
 dotenv.config();
 const app = express();
 
@@ -29,6 +30,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/institution", institutionRouter);
 app.use("/api/branch", branchRouter);
 app.use("/api/inventory", inventoryRouter);
+app.use("/api/staff", staffRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`API running on port ${PORT}`));

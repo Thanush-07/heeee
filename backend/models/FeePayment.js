@@ -33,6 +33,9 @@ const feePaymentSchema = new mongoose.Schema(
     mode: {
       type: String,
     },
+    note: {
+      type: String,
+    },
     date: {
       type: Date,
       default: Date.now

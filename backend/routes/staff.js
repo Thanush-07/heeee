@@ -76,17 +76,55 @@ router.post('/:staffId/attendance', async (req, res) => {
     if (!date || !Array.isArray(records)) return res.status(400).json({ message: 'Date and records are required' });
 
     const attendanceDate = new Date(date);
+    if (attendanceDate.getDay() === 0) {
+      return res.status(400).json({ message: 'Attendance not recorded on Sundays' });
+    }
 
-    const ops = records.map(r => ({
-      updateOne: {
-        filter: { studentId: r.studentId, date: attendanceDate },
-        update: { $set: { studentId: r.studentId, staffId, date: attendanceDate, status: r.status } },
-        upsert: true
+    const staff = await User.findById(staffId);
+    if (!staff) return res.status(404).json({ message: 'Staff not found' });
+
+    const studentFilter = { branch_id: staff.branch_id };
+    if (staff.classes && staff.classes.length > 0) {
+      studentFilter.class = { $in: staff.classes };
+    }
+
+    const students = await Student.find(studentFilter);
+    const studentMap = new Map(students.map((s) => [String(s._id), s]));
+
+    const ops = [];
+    const skipped = [];
+
+    for (const rec of records) {
+      const student = studentMap.get(String(rec.studentId));
+      if (!student) {
+        skipped.push(rec.studentId);
+        continue;
       }
-    }));
+
+      ops.push({
+        updateOne: {
+          filter: { studentId: student._id, date: attendanceDate },
+          update: {
+            $set: {
+              studentId: student._id,
+              staffId,
+              branch_id: student.branch_id,
+              institution_id: student.institution_id,
+              date: attendanceDate,
+              status: rec.status
+            }
+          },
+          upsert: true
+        }
+      });
+    }
+
+    if (ops.length === 0) {
+      return res.status(400).json({ message: 'No valid student records to save', skipped });
+    }
 
     await StudentAttendance.bulkWrite(ops);
-    res.json({ message: 'Attendance recorded' });
+    res.json({ message: 'Attendance recorded', saved: ops.length, skipped });
   } catch (err) {
     console.error('ATTENDANCE ERROR', err);
     res.status(500).json({ message: 'Failed to save attendance' });
@@ -101,7 +139,15 @@ router.get('/:staffId/attendance', async (req, res) => {
     const staff = await User.findById(staffId);
     if (!staff) return res.status(404).json({ message: 'Staff not found' });
 
-    const filter = { branch_id: staff.branch_id };
+    const studentFilter = { branch_id: staff.branch_id };
+    if (staff.classes && staff.classes.length > 0) {
+      studentFilter.class = { $in: staff.classes };
+    }
+
+    const allowedStudents = await Student.find(studentFilter).select('_id');
+    const allowedIds = allowedStudents.map((s) => s._id);
+
+    const filter = { branch_id: staff.branch_id, studentId: { $in: allowedIds } };
     if (start || end) {
       filter.date = {};
       if (start) filter.date.$gte = new Date(start);
@@ -113,6 +159,41 @@ router.get('/:staffId/attendance', async (req, res) => {
   } catch (err) {
     console.error('GET ATTENDANCE ERROR', err);
     res.status(500).json({ message: 'Failed to load attendance' });
+  }
+});
+
+// POST /api/staff/:staffId/fees  body: { studentId, amount, note, mode }
+router.post('/:staffId/fees', async (req, res) => {
+  try {
+    const { staffId } = req.params;
+    const { studentId, amount, note, mode, category } = req.body;
+    if (!studentId || !amount) return res.status(400).json({ message: 'Student and amount are required' });
+
+    const staff = await User.findById(staffId);
+    if (!staff) return res.status(404).json({ message: 'Staff not found' });
+
+    const student = await Student.findById(studentId);
+    if (!student || String(student.branch_id) !== String(staff.branch_id)) {
+      return res.status(404).json({ message: 'Student not found for this staff' });
+    }
+
+    const payment = new FeePayment({
+      institution_id: student.institution_id,
+      branch_id: student.branch_id,
+      studentId: student._id,
+      studentName: student.name,
+      class: student.class,
+      category: category || 'staff-collection',
+      amount: Number(amount),
+      mode: mode || 'cash',
+      note: note || ''
+    });
+
+    await payment.save();
+    res.status(201).json({ message: 'Fee recorded', payment });
+  } catch (err) {
+    console.error('STAFF FEE ERROR', err);
+    res.status(500).json({ message: 'Failed to record fee' });
   }
 });
 

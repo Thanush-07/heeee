@@ -6,6 +6,7 @@ import { Institution } from "./models/Institution.js";
 import { Branch } from "./models/Branch.js";
 import { Student } from "./models/Student.js";
 import { FeePayment } from "./models/FeePayment.js";
+import { StudentAttendance } from "./models/StudentAttendance.js";
 import { InventoryItem, PurchaseEntry } from "./models/inventory.js";
 
 dotenv.config();
@@ -23,6 +24,7 @@ async function run() {
     Branch.deleteMany({}),
     Student.deleteMany({}),
     FeePayment.deleteMany({}),
+    StudentAttendance.deleteMany({}),
     InventoryItem.deleteMany({}),
     PurchaseEntry.deleteMany({}),
   ]);
@@ -101,7 +103,7 @@ async function run() {
   await branchAdmin2.setPassword("Branch@123");
   await branchAdmin2.save();
 
-  // Add staff for branch1
+  // Add staff for branch1 with class assignments
   const staff1 = new User({
     name: "Staff Member 1",
     email: "staff1@ematix.com",
@@ -114,6 +116,7 @@ async function run() {
     status: "active",
     institution_id: institution._id,
     branch_id: branch1._id,
+    classes: ["1", "2"],
   });
   await staff1.setPassword("Staff@123");
   await staff1.save();
@@ -130,9 +133,28 @@ async function run() {
     status: "active",
     institution_id: institution._id,
     branch_id: branch1._id,
+    classes: ["1"],
   });
   await staff2.setPassword("Staff@123");
   await staff2.save();
+
+  // Add staff for branch2
+  const staff3 = new User({
+    name: "Staff Member 3",
+    email: "staff3@ematix.com",
+    phone: "9876543220",
+    age: 32,
+    address: "789 Staff Quarters, Tambaram, Chennai",
+    location: "Tambaram",
+    staffCategory: "teaching",
+    role: "staff",
+    status: "active",
+    institution_id: institution._id,
+    branch_id: branch2._id,
+    classes: ["2", "3"],
+  });
+  await staff3.setPassword("Staff@123");
+  await staff3.save();
 
   const studentsB1 = [
     {
@@ -145,7 +167,10 @@ async function run() {
       address: "123 Main Street, Chrompet, Chennai - 600044",
       admissionNumber: "202425-0001",
       academicYear: "2024/25",
-      status: "active"
+      status: "active",
+      aadharCardNumber: "1234-5678-9012",
+      rationCardNumber: "RC-001001",
+      customFields: [{ key: "Blood Group", value: "O+" }]
     },
     {
       name: "Priya Patel",
@@ -157,7 +182,10 @@ async function run() {
       address: "456 Oak Avenue, Chrompet, Chennai - 600044",
       admissionNumber: "202425-0002",
       academicYear: "2024/25",
-      status: "active"
+      status: "active",
+      aadharCardNumber: "2234-5678-9012",
+      rationCardNumber: "RC-001002",
+      customFields: [{ key: "Emergency Contact", value: "9988776655" }]
     },
     {
       name: "Arun Kumar",
@@ -169,7 +197,10 @@ async function run() {
       address: "789 Pine Road, Chrompet, Chennai - 600044",
       admissionNumber: "202425-0003",
       academicYear: "2024/25",
-      status: "active"
+      status: "active",
+      aadharCardNumber: "3234-5678-9012",
+      rationCardNumber: "RC-001003",
+      customFields: [{ key: "Allergies", value: "Peanut Allergy" }, { key: "Transportation", value: "School Bus" }]
     },
     {
       name: "Sneha Reddy",
@@ -181,7 +212,9 @@ async function run() {
       address: "321 Elm Street, Chrompet, Chennai - 600044",
       admissionNumber: "202425-0004",
       academicYear: "2024/25",
-      status: "active"
+      status: "active",
+      aadharCardNumber: "4234-5678-9012",
+      rationCardNumber: "RC-001004"
     },
     {
       name: "Karthik Nair",
@@ -193,7 +226,9 @@ async function run() {
       address: "654 Cedar Lane, Chrompet, Chennai - 600044",
       admissionNumber: "202425-0005",
       academicYear: "2024/25",
-      status: "left"
+      status: "left",
+      aadharCardNumber: "5234-5678-9012",
+      rationCardNumber: "RC-001005"
     }
   ].map(
     (s) =>
@@ -216,7 +251,9 @@ async function run() {
       address: "111 Maple Street, Tambaram, Chennai - 600045",
       admissionNumber: "202425-0006",
       academicYear: "2024/25",
-      status: "active"
+      status: "active",
+      aadharCardNumber: "6234-5678-9012",
+      rationCardNumber: "RC-001006"
     },
     {
       name: "Vikram Joshi",
@@ -228,7 +265,10 @@ async function run() {
       address: "222 Birch Avenue, Tambaram, Chennai - 600045",
       admissionNumber: "202425-0007",
       academicYear: "2024/25",
-      status: "active"
+      status: "active",
+      aadharCardNumber: "7234-5678-9012",
+      rationCardNumber: "RC-001007",
+      customFields: [{ key: "Special Notes", value: "Excellent in Mathematics" }]
     },
     {
       name: "Anjali Gupta",
@@ -240,7 +280,9 @@ async function run() {
       address: "333 Willow Road, Tambaram, Chennai - 600045",
       admissionNumber: "202425-0008",
       academicYear: "2024/25",
-      status: "transferred"
+      status: "transferred",
+      aadharCardNumber: "8234-5678-9012",
+      rationCardNumber: "RC-001008"
     }
   ].map(
     (s) =>
@@ -281,6 +323,84 @@ async function run() {
       })
   );
   await FeePayment.insertMany(feesB2);
+
+  // Add sample attendance records for staff
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const twoDaysAgo = new Date(today);
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+  const attendanceData = [
+    // Staff1 marking attendance for class 1 students
+    {
+      institution_id: institution._id,
+      branch_id: branch1._id,
+      studentId: studentsB1[0]._id,
+      staffId: staff1._id,
+      date: today,
+      status: "present",
+    },
+    {
+      institution_id: institution._id,
+      branch_id: branch1._id,
+      studentId: studentsB1[1]._id,
+      staffId: staff1._id,
+      date: today,
+      status: "absent",
+    },
+    {
+      institution_id: institution._id,
+      branch_id: branch1._id,
+      studentId: studentsB1[0]._id,
+      staffId: staff1._id,
+      date: yesterday,
+      status: "present",
+    },
+    {
+      institution_id: institution._id,
+      branch_id: branch1._id,
+      studentId: studentsB1[1]._id,
+      staffId: staff1._id,
+      date: yesterday,
+      status: "present",
+    },
+    // Staff1 marking attendance for class 2 students
+    {
+      institution_id: institution._id,
+      branch_id: branch1._id,
+      studentId: studentsB1[2]._id,
+      staffId: staff1._id,
+      date: today,
+      status: "present",
+    },
+    {
+      institution_id: institution._id,
+      branch_id: branch1._id,
+      studentId: studentsB1[3]._id,
+      staffId: staff1._id,
+      date: today,
+      status: "present",
+    },
+    // Staff2 marking attendance for class 1 students
+    {
+      institution_id: institution._id,
+      branch_id: branch1._id,
+      studentId: studentsB1[0]._id,
+      staffId: staff2._id,
+      date: twoDaysAgo,
+      status: "present",
+    },
+    {
+      institution_id: institution._id,
+      branch_id: branch1._id,
+      studentId: studentsB1[1]._id,
+      staffId: staff2._id,
+      date: twoDaysAgo,
+      status: "absent",
+    },
+  ];
+  await StudentAttendance.insertMany(attendanceData);
 
   // Add inventory items for branch1
   const inventoryItemsB1 = [];
@@ -360,8 +480,13 @@ async function run() {
   console.log("- institution admin: inst@ematix.com / Admin@123");
   console.log("- branch admin 1: bm1@ematix.com / Branch@123");
   console.log("- branch admin 2: bm2@ematix.com / Branch@123");
-  console.log("- staff 1: staff1@ematix.com / Staff@123");
-  console.log("- staff 2: staff2@ematix.com / Staff@123");
+  console.log("- staff 1 (branch1, class 1&2): staff1@ematix.com / Staff@123");
+  console.log("- staff 2 (branch1, class 1): staff2@ematix.com / Staff@123");
+  console.log("- staff 3 (branch2, class 2&3): staff3@ematix.com / Staff@123");
+  console.log("- 5 students in branch1 (class 1 and 2)");
+  console.log("- 3 students in branch2 (class 1, 2, and 3)");
+  console.log("- Attendance records for 3 dates");
+  console.log("- Fee payments recorded");
   console.log("- inventory items added for branch 1");
 
   await mongoose.disconnect();
