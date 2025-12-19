@@ -12,22 +12,25 @@ import { InventoryItem, PurchaseEntry } from "./models/inventory.js";
 dotenv.config();
 
 const MONGO_URL =
-  process.env.MONGO_URL || "mongodb://127.0.0.1:27017/first-crop_db";
+  process.env.MONGO_URL ||
+  process.env.MONGODB_URI ||
+  "mongodb://127.0.0.1:27017/first-crop_db";
 
 async function run() {
-  await mongoose.connect(MONGO_URL);
-  console.log("Mongo connected for seeding");
+  try {
+    await mongoose.connect(MONGO_URL);
+    console.log("Mongo connected for seeding");
 
-  await Promise.all([
-    User.deleteMany({}),
-    Institution.deleteMany({}),
-    Branch.deleteMany({}),
-    Student.deleteMany({}),
-    FeePayment.deleteMany({}),
-    StudentAttendance.deleteMany({}),
-    InventoryItem.deleteMany({}),
-    PurchaseEntry.deleteMany({}),
-  ]);
+    await Promise.all([
+      User.deleteMany({}),
+      Institution.deleteMany({}),
+      Branch.deleteMany({}),
+      Student.deleteMany({}),
+      FeePayment.deleteMany({}),
+      StudentAttendance.deleteMany({}),
+      InventoryItem.deleteMany({}),
+      PurchaseEntry.deleteMany({}),
+    ]);
 
   const companyAdmin = new User({
     name: "Company Admin",
@@ -473,28 +476,33 @@ async function run() {
       notes: "Textbook delivery",
     },
   ];
-  await PurchaseEntry.insertMany(purchasesB1);
+    await PurchaseEntry.insertMany(purchasesB1);
 
-  console.log("Seed data inserted:");
-  console.log("- company admin: company@erp.com / Admin@123");
-  console.log("- institution admin: inst@ematix.com / Admin@123");
-  console.log("- branch admin 1: bm1@ematix.com / Branch@123");
-  console.log("- branch admin 2: bm2@ematix.com / Branch@123");
-  console.log("- staff 1 (branch1, class 1&2): staff1@ematix.com / Staff@123");
-  console.log("- staff 2 (branch1, class 1): staff2@ematix.com / Staff@123");
-  console.log("- staff 3 (branch2, class 2&3): staff3@ematix.com / Staff@123");
-  console.log("- 5 students in branch1 (class 1 and 2)");
-  console.log("- 3 students in branch2 (class 1, 2, and 3)");
-  console.log("- Attendance records for 3 dates");
-  console.log("- Fee payments recorded");
-  console.log("- inventory items added for branch 1");
+    console.log("Seed data inserted:");
+    console.log("- company admin: company@erp.com / Admin@123");
+    console.log("- institution admin: inst@ematix.com / Admin@123");
+    console.log("- branch admin 1: bm1@ematix.com / Branch@123");
+    console.log("- branch admin 2: bm2@ematix.com / Branch@123");
+    console.log("- staff 1 (branch1, class 1&2): staff1@ematix.com / Staff@123");
+    console.log("- staff 2 (branch1, class 1): staff2@ematix.com / Staff@123");
+    console.log("- staff 3 (branch2, class 2&3): staff3@ematix.com / Staff@123");
+    console.log("- 5 students in branch1 (class 1 and 2)");
+    console.log("- 3 students in branch2 (class 1, 2, and 3)");
+    console.log("- Attendance records for 3 dates");
+    console.log("- Fee payments recorded");
+    console.log("- inventory items added for branch 1");
 
-  await mongoose.disconnect();
-  process.exit(0);
+    await mongoose.disconnect();
+    process.exit(0);
+  } catch (err) {
+    console.error("SEED ERROR", err);
+    try {
+      await mongoose.disconnect();
+    } catch (closeErr) {
+      console.error("Error closing Mongo connection", closeErr);
+    }
+    process.exit(1);
+  }
 }
 
-run().catch((err) => {
-  console.error("SEED ERROR", err);
-  process.exit(1);
-});
-// dont use this 
+run();

@@ -11,6 +11,7 @@ import institutionRouter from "./routes/institution.js";
 import branchRouter from "./routes/branch.js";
 import inventoryRouter from "./routes/inventory.js";
 import staffRouter from "./routes/staff.js";
+import parentRouter from "./routes/parent.js";
 dotenv.config();
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/api/institution", institutionRouter);
 app.use("/api/branch", branchRouter);
 app.use("/api/inventory", inventoryRouter);
 app.use("/api/staff", staffRouter);
+app.use("/api/parent", parentRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`API running on port ${PORT}`));
