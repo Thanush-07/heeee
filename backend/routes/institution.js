@@ -117,7 +117,45 @@ router.post("/:institutionId/branches", async (req, res) => {
     });
 
     await branch.save();
-    res.status(201).json(branch);
+
+    let branchAdmin = null;
+
+    // Auto-create a branch admin login when an email is supplied
+    if (managerEmail) {
+      const existing = await User.findOne({ email: managerEmail });
+
+      if (existing) {
+        if (existing.role !== "branch_admin") {
+          return res.status(400).json({ message: "Email already used by a different role" });
+        }
+
+        // Ensure the existing user is linked to this branch and institution
+        existing.branch_id = branch._id;
+        existing.institution_id = institutionId;
+        existing.status = "active";
+        await existing.save();
+        branchAdmin = existing;
+      } else {
+        const user = new User({
+          name: managerName || `${branch_name} Admin`,
+          email: managerEmail,
+          phone: contactPhone,
+          role: "branch_admin",
+          institution_id: institutionId,
+          branch_id: branch._id,
+          status: "active",
+          password_hash: "",
+        });
+
+        await user.setPassword("Branch@123");
+        await user.save();
+        branchAdmin = user;
+      }
+    }
+
+    // Keep response backward-compatible: branch fields remain at root, admin (if any) attached
+    const branchJson = branch.toObject();
+    res.status(201).json({ ...branchJson, branchAdmin });
   } catch (err) {
     console.error("CREATE BRANCH ERROR:", err);
     res.status(500).json({ message: "Failed to save branch" });
