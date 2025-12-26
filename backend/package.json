@@ -4,7 +4,9 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "seed:users": "node seedUser.js",
+    "seed:parents": "node seedParentData.js"
   },
   "dependencies": {
     "express": "^4.21.0",
