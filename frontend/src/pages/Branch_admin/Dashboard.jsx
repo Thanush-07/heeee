@@ -81,7 +81,7 @@ export default function BranchDashboard() {
             />
           )}
           <div>
-            <h1>{branch?.name || "Branch Dashboard"}</h1>
+            <h1>Welcome  {branch?.name || "Branch Dashboard"}</h1>
             <p>Overview of students, fees and operations in this branch.</p>
           </div>
         </div>
