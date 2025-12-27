@@ -130,9 +130,12 @@ router.post("/items", async (req, res) => {
         .json({ message: "branch_id, category, and name are required" });
     }
 
+    // Sanitize category
+    const sanitizedCategory = String(category).trim();
+
     const item = new InventoryItem({
       branch_id,
-      category,
+      category: sanitizedCategory,
       name,
       description: description || "",
       minQuantity: minQuantity || 0,
@@ -144,6 +147,9 @@ router.post("/items", async (req, res) => {
     res.status(201).json(item);
   } catch (err) {
     console.error("CREATE ITEM ERROR:", err);
+    if (err?.name === "ValidationError") {
+      return res.status(400).json({ message: err.message });
+    }
     res.status(500).json({ message: "Failed to create item" });
   }
 });

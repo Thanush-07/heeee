@@ -8,6 +8,7 @@ import { Student } from "../models/Student.js";
 import { FeePayment } from "../models/FeePayment.js";
 import { User } from "../models/User.js";
 import { FeeStructure } from "../models/FeeStructure.js";
+import { Expense } from "../models/Expense.js";
 
 const router = express.Router();
 
@@ -428,6 +429,57 @@ router.get("/:branchId/logo", async (req, res) => {
   }
 });
 
+/* ================= BRANCH EXPENSES ================= */
+
+// GET /api/branch/:branchId/expenses
+router.get("/:branchId/expenses", async (req, res) => {
+  try {
+    const { branchId } = req.params;
+    const list = await Expense.find({ branch_id: branchId })
+      .sort({ date: -1, createdAt: -1 })
+      .limit(200);
+    res.json(list);
+  } catch (err) {
+    console.error("GET EXPENSES ERROR:", err);
+    res.status(500).json({ message: "Failed to load expenses" });
+  }
+});
+
+// POST /api/branch/:branchId/expenses
+router.post("/:branchId/expenses", async (req, res) => {
+  try {
+    const { branchId } = req.params;
+    const { category, description, amount, date } = req.body;
+
+    if (!category || amount === undefined) {
+      return res.status(400).json({ message: "Category and amount are required" });
+    }
+
+    const branch = await Branch.findById(branchId);
+    if (!branch) {
+      return res.status(404).json({ message: "Branch not found" });
+    }
+
+    const expense = new Expense({
+      institution_id: branch.institution_id,
+      branch_id: branchId,
+      category: String(category).trim(),
+      description: description || "",
+      amount: Number(amount),
+      date: date ? new Date(date) : new Date(),
+    });
+
+    await expense.save();
+    res.status(201).json(expense);
+  } catch (err) {
+    console.error("CREATE EXPENSE ERROR:", err);
+    if (err?.name === "ValidationError") {
+      return res.status(400).json({ message: err.message });
+    }
+    res.status(500).json({ message: "Failed to create expense" });
+  }
+});
+
 /* ================= STAFF MANAGEMENT ================= */
 
 // GET /api/branch/:branchId/staff
@@ -457,7 +509,8 @@ router.post("/:branchId/staff", upload.single("photo"), async (req, res) => {
       age,
       address,
       location,
-      staffCategory
+      staffCategory,
+      staffSubcategory
     } = req.body;
 
     // Validate required fields
@@ -485,6 +538,7 @@ router.post("/:branchId/staff", upload.single("photo"), async (req, res) => {
       address,
       location,
       staffCategory,
+      staffSubcategory: staffSubcategory && typeof staffSubcategory === 'string' ? staffSubcategory.trim() : undefined,
       role: "staff",
       institution_id: branch.institution_id,
       branch_id: branchId,
@@ -539,6 +593,11 @@ router.put("/:branchId/staff/:staffId", upload.single("photo"), async (req, res)
     // Convert age to number if provided
     if (updateData.age) {
       updateData.age = Number(updateData.age);
+    }
+
+    // normalize staffSubcategory (trim string)
+    if (typeof updateData.staffSubcategory === 'string') {
+      updateData.staffSubcategory = updateData.staffSubcategory.trim();
     }
 
     // handle classes update (might be JSON string or comma separated)
@@ -653,7 +712,18 @@ router.post("/:branchId/students", async (req, res) => {
       phoneNo,
       address,
       admissionNumber,
-      academicYear
+      academicYear,
+      dateOfBirth,
+      fees,
+      residency,
+      busFees,
+      hostelFees,
+      emisNo,
+      image,
+      aadharCardNumber,
+      rationCardNumber,
+      motherName,
+      fatherName
     } = req.body;
 
     // Validate required fields
@@ -684,7 +754,7 @@ router.post("/:branchId/students", async (req, res) => {
       return res.status(404).json({ message: "Branch not found" });
     }
 
-    const student = new Student({
+    const studentData = {
       institution_id: branch.institution_id,
       branch_id: branchId,
       name,
@@ -696,8 +766,23 @@ router.post("/:branchId/students", async (req, res) => {
       address,
       admissionNumber,
       academicYear,
+      dateOfBirth: dateOfBirth || null,
       status: "active"
-    });
+    };
+
+    // Add optional fields if provided
+    if (fees !== undefined && fees !== null) studentData.fees = fees;
+    if (residency) studentData.residency = residency;
+    if (busFees !== undefined && busFees !== null) studentData.busFees = busFees;
+    if (hostelFees !== undefined && hostelFees !== null) studentData.hostelFees = hostelFees;
+    if (emisNo) studentData.emisNo = emisNo;
+    if (image) studentData.image = image;
+    if (aadharCardNumber) studentData.aadharCardNumber = aadharCardNumber;
+    if (rationCardNumber) studentData.rationCardNumber = rationCardNumber;
+    if (motherName) studentData.motherName = motherName;
+    if (fatherName) studentData.fatherName = fatherName;
+
+    const student = new Student(studentData);
 
     await student.save();
     res.status(201).json(student);
@@ -718,12 +803,27 @@ router.put("/:branchId/students/:studentId", async (req, res) => {
     delete updateData.branch_id;
     delete updateData.admissionNumber; // Admission number should not be changed
 
-    // If updating roll number, check for conflicts
+    // Drop undefined fields so we only set what is provided
+    Object.keys(updateData).forEach((key) => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
+
+    const existingStudent = await Student.findOne({ _id: studentId, branch_id: branchId });
+    if (!existingStudent) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // If updating roll number, check for conflicts in the target class/section
     if (updateData.rollNo) {
+      const targetClass = updateData.class || existingStudent.class;
+      const targetSection = updateData.section || existingStudent.section;
+
       const existingRollNo = await Student.findOne({
         branch_id: branchId,
-        class: updateData.class || (await Student.findById(studentId)).class,
-        section: updateData.section || (await Student.findById(studentId)).section,
+        class: targetClass,
+        section: targetSection,
         rollNo: updateData.rollNo,
         _id: { $ne: studentId }
       });
@@ -734,13 +834,9 @@ router.put("/:branchId/students/:studentId", async (req, res) => {
 
     const student = await Student.findOneAndUpdate(
       { _id: studentId, branch_id: branchId },
-      updateData,
+      { $set: updateData },
       { new: true }
     );
-
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
-    }
 
     res.json(student);
   } catch (err) {

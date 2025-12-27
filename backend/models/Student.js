@@ -50,6 +50,39 @@ const studentSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    dateOfBirth: {
+      type: Date,
+      default: null
+    },
+    fees: {
+      type: Number,
+      default: null
+    },
+    residency: {
+      type: String,
+      enum: ["hosteller", "day-scholar"],
+      default: "hosteller"
+    },
+    busFees: {
+      type: Number,
+      default: null
+    },
+    hostelFees: {
+      type: Number,
+      default: null
+    },
+    emisNo: {
+      type: String,
+      default: null
+    },
+    motherName: {
+      type: String,
+      default: null
+    },
+    fatherName: {
+      type: String,
+      default: null
+    },
     status: {
       type: String,
       enum: ["active", "left", "transferred"],

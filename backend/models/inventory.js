@@ -13,7 +13,6 @@ const InventoryItemSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ["uniforms", "shoes", "stationery", "books", "office_supplies", "other"],
       required: true,
     },
     name: {

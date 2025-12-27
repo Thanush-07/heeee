@@ -37,7 +37,6 @@ const userSchema = new mongoose.Schema(
     // Staff-specific fields
     staffCategory: {
       type: String,
-      enum: ["teaching", "non-teaching"],
       required: function() { return this.role === "staff"; }
     },
     age: {
@@ -58,6 +57,11 @@ const userSchema = new mongoose.Schema(
     classes: {
       type: [String],
       default: []
+    },
+    // subcategory/detail for non-teaching or custom categories
+    staffSubcategory: {
+      type: String,
+      trim: true
     },
     photo: {
       data: Buffer,
